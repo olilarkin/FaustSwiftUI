@@ -5,18 +5,28 @@ import SwiftUI
 public struct FaustUIView<ViewModelType: FaustUIValueBinding>: View {
     public let ui: [FaustUI]
     @ObservedObject public var viewModel: ViewModelType
+    private let scrollable: Bool
 
     @StateObject private var themeManager = FaustThemeManager()
 
-    public init(ui: [FaustUI], viewModel: ViewModelType) {
+    public init(ui: [FaustUI], viewModel: ViewModelType, scrollable: Bool = true) {
         self.ui = ui
         self.viewModel = viewModel
+        self.scrollable = scrollable
     }
 
     public var body: some View {
-        VStack(alignment: .leading) {
+        let content = VStack(alignment: .leading, spacing: 5) {
             ForEach(ui) { item in
                 render(item)
+            }
+        }
+
+        Group {
+            if scrollable {
+                ScrollView { content }
+            } else {
+                content
             }
         }.environmentObject(themeManager)
     }
@@ -62,6 +72,7 @@ public struct FaustUIView<ViewModelType: FaustUIValueBinding>: View {
                     }
                 }
             }
+            .padding(5)
         }
 
         if item.type == .hgroup, let items = item.items {
@@ -72,6 +83,7 @@ public struct FaustUIView<ViewModelType: FaustUIValueBinding>: View {
                     }
                 }
             }
+            .padding(5)
         }
 
         if item.type == .tgroup, let items = item.items {
@@ -88,6 +100,7 @@ public struct FaustUIView<ViewModelType: FaustUIValueBinding>: View {
                         }
                     }
                 }
+                .padding(5)
             )
         }
 

@@ -49,8 +49,8 @@ public protocol FaustWidgetTheme {
 public class DefaultTheme: FaustWidgetTheme {
 
     public var accentColor: Color = .accentColor
-    public var numboxTextColor: Color = .white
-    public var numboxBackgroundColor: Color = .gray
+    public var numboxTextColor: Color = .primary
+    public var numboxBackgroundColor: Color = .clear
     
     public var cornerRadius: CGFloat = 5
     public var font: Font = .title

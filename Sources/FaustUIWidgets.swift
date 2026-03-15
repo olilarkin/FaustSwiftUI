@@ -19,7 +19,9 @@ public struct FaustCheckbox: View {
                 get: { value > 0.5 },
                 set: { value = $0 ? 1.0 : 0.0 }
             )) {
-                Text(label)
+                Text(label.replacingOccurrences(of: "_", with: " "))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
             .frame(minHeight: themeManager.theme.labelSize, maxHeight: themeManager.theme.labelSize * 2)
 //            .padding(.leading, themeManager.theme.padding)
@@ -51,7 +53,9 @@ public struct FaustButton: View {
                     value = 0.0
                 }
             }) {
-                Text(label)
+                Text(label.replacingOccurrences(of: "_", with: " "))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .padding()
                     .cornerRadius(themeManager.theme.cornerRadius)
                     .frame(height: themeManager.theme.labelSize - 2)
@@ -80,7 +84,10 @@ public struct FaustVBargraph: View {
     @ViewBuilder
     private var render: some View {
         VStack(alignment: .center) {
-            Text(label).frame(alignment: .center)
+            Text(label.replacingOccurrences(of: "_", with: " "))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(alignment: .center)
 
             VStack(alignment: .center, spacing: 0) {
                 GeometryReader { geometry in
@@ -130,7 +137,9 @@ public struct FaustHBargraph: View {
     @ViewBuilder
     private var render_label: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(label)
+            Text(label.replacingOccurrences(of: "_", with: " "))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 .frame(height: themeManager.theme.labelSize)
 
             Text(String(format: "%.1f", value))
@@ -201,7 +210,9 @@ struct FaustNSwitch: View {
     private var render: some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
-                Text(label)
+                Text(label.replacingOccurrences(of: "_", with: " "))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .multilineTextAlignment(.center)
                     .frame(height: themeManager.theme.labelSize)
 
@@ -265,7 +276,9 @@ struct FaustHSlider: View {
     @ViewBuilder
     private var render_label: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(label)
+            Text(label.replacingOccurrences(of: "_", with: " "))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 .frame(height: themeManager.theme.labelSize)
 
             Text(String(format: "%.1f", value))
@@ -372,7 +385,9 @@ struct FaustVSlider: View {
     private var render: some View {
         HStack(spacing: 0) {
             VStack(alignment: .center) {
-                Text(label)
+                Text(label.replacingOccurrences(of: "_", with: " "))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .multilineTextAlignment(.center)
 
                 if value < range.lowerBound || value > range.upperBound {
@@ -447,7 +462,7 @@ struct FaustVSlider: View {
             }
         }
         .padding(themeManager.theme.padding)
-        .frame(width: themeManager.theme.labelSize * 3)
+        .frame(width: themeManager.theme.labelSize * 4)
 //        .border(.black, width:1)
     }
 }
@@ -462,7 +477,9 @@ struct FaustKnob: View {
     @Binding var value: Double
     @EnvironmentObject var themeManager: FaustThemeManager
 
-    private let thickness: CGFloat = 12.0
+    @State private var isDragging = false
+
+    private let thickness: CGFloat = 6.0
     private let totalAngle: Angle = .degrees(300)
     private let startAngle: Angle = .degrees(120) // leaves 60° gap at bottom
 
@@ -472,7 +489,9 @@ struct FaustKnob: View {
     private var render: some View {
         HStack(spacing: 0) {
             VStack(alignment: .center) {
-                Text(label)
+                Text(label.replacingOccurrences(of: "_", with: " "))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .multilineTextAlignment(.center)
 
                 GeometryReader { geometry in
@@ -504,24 +523,33 @@ struct FaustKnob: View {
                                 clockwise: false
                             )
                         }
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: thickness, lineCap: .round))
+                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: thickness, lineCap: .butt))
                     }
                     .gesture(
                         DragGesture()
                             .onChanged { gesture in
+                                if !isDragging {
+                                    isDragging = true
+                                    NSCursor.hide()
+                                }
 
                                 let location = gesture.location.y
                                 let clamped = min(max(location - 0 / 2, 0), height - 0)
                                 let percent = 1.0 - (clamped / (height - 0))
-                                
+
                                 let scaled = (Double(percent) * (range.upperBound - range.lowerBound))  + range.lowerBound
 
                                 value = min(max(scaled, range.lowerBound), range.upperBound)
                             }
+                            .onEnded { _ in
+                                isDragging = false
+                                NSCursor.unhide()
+                            }
                     )
                 }
                 .aspectRatio(1, contentMode: .fit)
-                
+                .frame(maxWidth: themeManager.theme.labelSize * 2, maxHeight: themeManager.theme.labelSize * 2)
+
                 HStack {
                     Text(String(format: "%.1f", value))
                         .frame(height: themeManager.theme.labelSize)
@@ -535,6 +563,6 @@ struct FaustKnob: View {
             }
         }
         .padding(themeManager.theme.padding)
-        .frame(width: themeManager.theme.labelSize * 3)
+        .frame(width: themeManager.theme.labelSize * 4)
     }
 }
