@@ -2,18 +2,43 @@
 
 import SwiftUI
 
-// MARK: -
+// MARK: - Helpers
+
+private func valueString(_ value: Double, unit: String?) -> String {
+    if let unit = unit {
+        return String(format: "%.1f %@", value, unit)
+    }
+    return String(format: "%.1f", value)
+}
+
+extension View {
+    @ViewBuilder
+    func faustTooltip(_ tooltip: String?) -> some View {
+        if let tooltip = tooltip {
+            self.help(tooltip)
+        } else {
+            self
+        }
+    }
+}
+
+// MARK: - Checkbox
 
 public struct FaustCheckbox: View {
     public let label: String
     public let address: String
     @Binding var value: Double
+    public let tooltip: String?
     @EnvironmentObject var themeManager: FaustThemeManager
 
-    public var body: some View { render }
+    public init(label: String, address: String, value: Binding<Double>, tooltip: String? = nil) {
+        self.label = label
+        self.address = address
+        _value = value
+        self.tooltip = tooltip
+    }
 
-    @ViewBuilder
-    private var render: some View {
+    public var body: some View {
         VStack {
             Toggle(isOn: Binding(
                 get: { value > 0.5 },
@@ -24,28 +49,31 @@ public struct FaustCheckbox: View {
                     .minimumScaleFactor(0.6)
             }
             .frame(minHeight: themeManager.theme.labelSize, maxHeight: themeManager.theme.labelSize * 2)
-//            .padding(.leading, themeManager.theme.padding)
-//            .padding(.trailing, themeManager.theme.padding)
-//                    .border(.black, width: 1)
         }
         .padding(.leading, themeManager.theme.padding)
         .padding(.trailing, themeManager.theme.padding)
         .frame(height: themeManager.theme.labelSize)
+        .faustTooltip(tooltip)
     }
 }
 
-// MARK: -
+// MARK: - Button
 
 public struct FaustButton: View {
     public let label: String
     public let address: String
     @Binding var value: Double
+    public let tooltip: String?
     @EnvironmentObject var themeManager: FaustThemeManager
 
-    public var body: some View { render }
+    public init(label: String, address: String, value: Binding<Double>, tooltip: String? = nil) {
+        self.label = label
+        self.address = address
+        _value = value
+        self.tooltip = tooltip
+    }
 
-    @ViewBuilder
-    private var render: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: {
                 value = 1.0
@@ -66,10 +94,11 @@ public struct FaustButton: View {
         .padding(.trailing, themeManager.theme.padding)
         .padding(.top, themeManager.theme.padding)
         .padding(.bottom, themeManager.theme.padding)
+        .faustTooltip(tooltip)
     }
 }
 
-// MARK: -
+// MARK: - VBargraph
 
 public struct FaustVBargraph: View {
     public let label: String
@@ -77,12 +106,21 @@ public struct FaustVBargraph: View {
     public let min: Double
     public let max: Double
     @Binding var value: Double
+    public let unit: String?
+    public let tooltip: String?
     @EnvironmentObject var themeManager: FaustThemeManager
 
-    public var body: some View { render }
+    public init(label: String, address: String, min: Double, max: Double, value: Binding<Double>, unit: String? = nil, tooltip: String? = nil) {
+        self.label = label
+        self.address = address
+        self.min = min
+        self.max = max
+        _value = value
+        self.unit = unit
+        self.tooltip = tooltip
+    }
 
-    @ViewBuilder
-    private var render: some View {
+    public var body: some View {
         VStack(alignment: .center) {
             Text(label.replacingOccurrences(of: "_", with: " "))
                 .lineLimit(1)
@@ -104,7 +142,7 @@ public struct FaustVBargraph: View {
             }
 
             HStack {
-                Text(String(format: "%.1f", value))
+                Text(valueString(value, unit: unit))
                     .frame(height: themeManager.theme.labelSize)
                     .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 3)
                     .background(themeManager.theme.numboxBackgroundColor)
@@ -119,10 +157,11 @@ public struct FaustVBargraph: View {
         .padding(.trailing, themeManager.theme.padding)
         .padding(.top, themeManager.theme.padding)
         .padding(.bottom, themeManager.theme.padding)
+        .faustTooltip(tooltip)
     }
 }
 
-// MARK: -
+// MARK: - HBargraph
 
 public struct FaustHBargraph: View {
     public let label: String
@@ -130,9 +169,19 @@ public struct FaustHBargraph: View {
     public let min: Double
     public let max: Double
     @Binding var value: Double
+    public let unit: String?
+    public let tooltip: String?
     @EnvironmentObject var themeManager: FaustThemeManager
 
-    public var body: some View { render }
+    public init(label: String, address: String, min: Double, max: Double, value: Binding<Double>, unit: String? = nil, tooltip: String? = nil) {
+        self.label = label
+        self.address = address
+        self.min = min
+        self.max = max
+        _value = value
+        self.unit = unit
+        self.tooltip = tooltip
+    }
 
     @ViewBuilder
     private var render_label: some View {
@@ -142,7 +191,7 @@ public struct FaustHBargraph: View {
                 .minimumScaleFactor(0.6)
                 .frame(height: themeManager.theme.labelSize)
 
-            Text(String(format: "%.1f", value))
+            Text(valueString(value, unit: unit))
                 .frame(height: themeManager.theme.labelSize)
                 .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 3)
                 .background(themeManager.theme.numboxBackgroundColor)
@@ -153,8 +202,7 @@ public struct FaustHBargraph: View {
         }
     }
 
-    @ViewBuilder
-    private var render: some View {
+    public var body: some View {
         HStack(alignment: .top) {
             render_label
 
@@ -174,15 +222,15 @@ public struct FaustHBargraph: View {
             .frame(height: themeManager.theme.labelSize * 2)
             .frame(width: themeManager.theme.sliderSize)
         }
-
         .frame(height: themeManager.theme.labelSize * 3)
         .frame(width: themeManager.theme.labelSize * 2 + themeManager.theme.sliderSize)
         .padding(.leading, themeManager.theme.padding)
         .padding(.trailing, themeManager.theme.padding)
+        .faustTooltip(tooltip)
     }
 }
 
-// MARK: -
+// MARK: - NSwitch (Number Entry)
 
 struct FaustNSwitch: View {
     public let label: String
@@ -190,24 +238,24 @@ struct FaustNSwitch: View {
     let range: ClosedRange<Double>
     let step: Double
     @Binding var value: Double
+    public let unit: String?
+    public let tooltip: String?
     @EnvironmentObject var themeManager: FaustThemeManager
 
     @State private var text: String
 
-    public init(label: String, address: String, range: ClosedRange<Double>, step: Double, value: Binding<Double>) {
+    public init(label: String, address: String, range: ClosedRange<Double>, step: Double, value: Binding<Double>, unit: String? = nil, tooltip: String? = nil) {
         self.label = label
         self.address = address
         self.range = range
         self.step = step
         _value = value
-
+        self.unit = unit
+        self.tooltip = tooltip
         _text = State(initialValue: String(value.wrappedValue))
     }
 
-    public var body: some View { render }
-
-    @ViewBuilder
-    private var render: some View {
+    public var body: some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(label.replacingOccurrences(of: "_", with: " "))
@@ -216,36 +264,43 @@ struct FaustNSwitch: View {
                     .multilineTextAlignment(.center)
                     .frame(height: themeManager.theme.labelSize)
 
-                TextField("Enter a number", text: $text)
-                    // .keyboardType(.decimalPad)
-                    .onChange(of: text) { newValue in
-                        var filtered = ""
-                        var hasDecimalPoint = false
+                HStack(spacing: 2) {
+                    TextField("Enter a number", text: $text)
+                        .onChange(of: text) { newValue in
+                            var filtered = ""
+                            var hasDecimalPoint = false
 
-                        for (i, char) in newValue.enumerated() {
-                            if char.isWholeNumber {
-                                filtered.append(char)
-                            } else if char == "." && !hasDecimalPoint {
-                                if i == 0 || newValue[newValue.index(newValue.startIndex, offsetBy: i - 1)].isWholeNumber {
+                            for (i, char) in newValue.enumerated() {
+                                if char.isWholeNumber {
                                     filtered.append(char)
-                                } else {
-                                    filtered = "0."
+                                } else if char == "." && !hasDecimalPoint {
+                                    if i == 0 || newValue[newValue.index(newValue.startIndex, offsetBy: i - 1)].isWholeNumber {
+                                        filtered.append(char)
+                                    } else {
+                                        filtered = "0."
+                                    }
+                                    hasDecimalPoint = true
                                 }
-                                hasDecimalPoint = true
+                            }
+
+                            if filtered != newValue {
+                                text = filtered
+                            }
+
+                            if let floatVal = Double(filtered) {
+                                value = floatVal
                             }
                         }
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(height: themeManager.theme.labelSize)
+                        .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 3)
 
-                        if filtered != newValue {
-                            text = filtered
-                        }
-
-                        if let floatVal = Double(filtered) {
-                            value = floatVal
-                        }
+                    if let unit = unit {
+                        Text(unit)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(height: themeManager.theme.labelSize)
-                    .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 3)
+                }
 
                 Spacer()
                     .frame(height: themeManager.theme.labelSize * 1)
@@ -255,10 +310,11 @@ struct FaustNSwitch: View {
         .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 3)
         .padding(.leading, themeManager.theme.padding)
         .padding(.trailing, themeManager.theme.padding)
+        .faustTooltip(tooltip)
     }
 }
 
-// MARK: -
+// MARK: - HSlider
 
 struct FaustHSlider: View {
     public let label: String
@@ -266,12 +322,24 @@ struct FaustHSlider: View {
     let range: ClosedRange<Double>
     let step: Double
     @Binding var value: Double
+    public let unit: String?
+    public let tooltip: String?
+    public let scale: FaustUIScale
     @EnvironmentObject var themeManager: FaustThemeManager
 
     @State private var isDragging = false
     @GestureState private var dragOffset: CGSize = .zero
 
-    public var body: some View { render }
+    public init(label: String, address: String, range: ClosedRange<Double>, step: Double, value: Binding<Double>, unit: String? = nil, tooltip: String? = nil, scale: FaustUIScale = .linear) {
+        self.label = label
+        self.address = address
+        self.range = range
+        self.step = step
+        _value = value
+        self.unit = unit
+        self.tooltip = tooltip
+        self.scale = scale
+    }
 
     @ViewBuilder
     private var render_label: some View {
@@ -281,7 +349,7 @@ struct FaustHSlider: View {
                 .minimumScaleFactor(0.6)
                 .frame(height: themeManager.theme.labelSize)
 
-            Text(String(format: "%.1f", value))
+            Text(valueString(value, unit: unit))
                 .frame(height: themeManager.theme.labelSize)
                 .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 3)
                 .background(themeManager.theme.numboxBackgroundColor)
@@ -293,8 +361,7 @@ struct FaustHSlider: View {
         }
     }
 
-    @ViewBuilder
-    private var render: some View {
+    public var body: some View {
         HStack(alignment: .center) {
             render_label
 
@@ -310,8 +377,7 @@ struct FaustHSlider: View {
                         let width = geo.size.width
                         let trackHeight = geo.size.height * 0.25
                         let handleWidth = trackHeight * 1.5
-                        // let totalSteps = (range.upperBound - range.lowerBound) / step
-                        let normalized = CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
+                        let normalized = CGFloat(FaustScaleMapping.toNormalized(value, min: range.lowerBound, max: range.upperBound, scale: scale))
                         let handleX = normalized * (width - handleWidth)
 
                         ZStack(alignment: .leading) {
@@ -337,9 +403,9 @@ struct FaustHSlider: View {
                                             isDragging = true
                                             let location = gesture.location.x
                                             let clamped = min(max(location - handleWidth / 2, 0), width - handleWidth)
-                                            let percent = clamped / (width - handleWidth)
-                                            let stepped = (Double(percent) * (range.upperBound - range.lowerBound) / step).rounded() * step + range.lowerBound
-
+                                            let percent = Double(clamped / (width - handleWidth))
+                                            let raw = FaustScaleMapping.toValue(percent, min: range.lowerBound, max: range.upperBound, scale: scale)
+                                            let stepped = ((raw - range.lowerBound) / step).rounded() * step + range.lowerBound
                                             value = min(max(stepped, range.lowerBound), range.upperBound)
                                         }
                                         .onEnded { _ in
@@ -348,9 +414,7 @@ struct FaustHSlider: View {
                                 )
                         }
                         .onTapGesture(count: 2) {
-                            // Reset on double-click
                             let mid = (range.lowerBound + range.upperBound) / 2
-
                             value = (mid / step).rounded() * step
                         }
                     }
@@ -363,10 +427,11 @@ struct FaustHSlider: View {
         .frame(width: themeManager.theme.labelSize * 2 + themeManager.theme.sliderSize)
         .padding(.leading, themeManager.theme.padding)
         .padding(.trailing, themeManager.theme.padding)
+        .faustTooltip(tooltip)
     }
 }
 
-// MARK: -
+// MARK: - VSlider
 
 struct FaustVSlider: View {
     public let label: String
@@ -374,15 +439,26 @@ struct FaustVSlider: View {
     let range: ClosedRange<Double>
     let step: Double
     @Binding var value: Double
+    public let unit: String?
+    public let tooltip: String?
+    public let scale: FaustUIScale
     @EnvironmentObject var themeManager: FaustThemeManager
 
     @State private var isDragging = false
     @GestureState private var dragOffset: CGSize = .zero
 
-    public var body: some View { render }
+    public init(label: String, address: String, range: ClosedRange<Double>, step: Double, value: Binding<Double>, unit: String? = nil, tooltip: String? = nil, scale: FaustUIScale = .linear) {
+        self.label = label
+        self.address = address
+        self.range = range
+        self.step = step
+        _value = value
+        self.unit = unit
+        self.tooltip = tooltip
+        self.scale = scale
+    }
 
-    @ViewBuilder
-    private var render: some View {
+    public var body: some View {
         HStack(spacing: 0) {
             VStack(alignment: .center) {
                 Text(label.replacingOccurrences(of: "_", with: " "))
@@ -401,9 +477,8 @@ struct FaustVSlider: View {
                         let width = geo.size.width * 0.75
                         let height = geo.size.height
                         let trackWidth = geo.size.width * 0.25
-                        let handleHeight = trackWidth * 1.5 // width * 0.4
-                        // let totalSteps = (range.upperBound - range.lowerBound) / step
-                        let normalized = CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
+                        let handleHeight = trackWidth * 1.5
+                        let normalized = CGFloat(FaustScaleMapping.toNormalized(value, min: range.lowerBound, max: range.upperBound, scale: scale))
                         let handleY = (1.0 - normalized) * (height - handleHeight)
 
                         ZStack(alignment: .top) {
@@ -430,8 +505,8 @@ struct FaustVSlider: View {
                                             let location = gesture.location.y
                                             let clamped = min(max(location - handleHeight / 2, 0), height - handleHeight)
                                             let percent = 1.0 - (clamped / (height - handleHeight))
-                                            let stepped = (Double(percent) * (range.upperBound - range.lowerBound) / step).rounded() * step + range.lowerBound
-
+                                            let raw = FaustScaleMapping.toValue(Double(percent), min: range.lowerBound, max: range.upperBound, scale: scale)
+                                            let stepped = ((raw - range.lowerBound) / step).rounded() * step + range.lowerBound
                                             value = min(max(stepped, range.lowerBound), range.upperBound)
                                         }
                                         .onEnded { _ in
@@ -442,14 +517,13 @@ struct FaustVSlider: View {
                         .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
                             let mid = (range.lowerBound + range.upperBound) / 2
-
                             value = (mid / step).rounded() * step
                         }
                     }
                     .frame(width: themeManager.theme.labelSize * 2, height: themeManager.theme.sliderSize)
 
                     HStack {
-                        Text(String(format: "%.1f", value))
+                        Text(valueString(value, unit: unit))
                             .frame(height: themeManager.theme.labelSize)
                             .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 4)
                             .background(themeManager.theme.numboxBackgroundColor)
@@ -463,11 +537,11 @@ struct FaustVSlider: View {
         }
         .padding(themeManager.theme.padding)
         .frame(width: themeManager.theme.labelSize * 4)
-//        .border(.black, width:1)
+        .faustTooltip(tooltip)
     }
 }
 
-// MARK: -
+// MARK: - Knob
 
 struct FaustKnob: View {
     public let label: String
@@ -475,18 +549,29 @@ struct FaustKnob: View {
     public let range: ClosedRange<Double>
     public let step: Double
     @Binding var value: Double
+    public let unit: String?
+    public let tooltip: String?
+    public let scale: FaustUIScale
     @EnvironmentObject var themeManager: FaustThemeManager
 
     @State private var isDragging = false
 
     private let thickness: CGFloat = 6.0
     private let totalAngle: Angle = .degrees(300)
-    private let startAngle: Angle = .degrees(120) // leaves 60° gap at bottom
+    private let startAngle: Angle = .degrees(120) // leaves 60deg gap at bottom
 
-    public var body: some View { render }
+    public init(label: String, address: String, range: ClosedRange<Double>, step: Double, value: Binding<Double>, unit: String? = nil, tooltip: String? = nil, scale: FaustUIScale = .linear) {
+        self.label = label
+        self.address = address
+        self.range = range
+        self.step = step
+        _value = value
+        self.unit = unit
+        self.tooltip = tooltip
+        self.scale = scale
+    }
 
-    @ViewBuilder
-    private var render: some View {
+    public var body: some View {
         HStack(spacing: 0) {
             VStack(alignment: .center) {
                 Text(label.replacingOccurrences(of: "_", with: " "))
@@ -499,13 +584,13 @@ struct FaustKnob: View {
                     let size = min(geometry.size.width, geometry.size.height)
                     let center = CGPoint(x: size / 2, y: size / 2)
                     let radius = (size - thickness) / 2
-                    let offset = Angle(degrees:1)
-                    
-                    let normalized = CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
-                    
+                    let offset = Angle(degrees: 1)
+
+                    let normalized = CGFloat(FaustScaleMapping.toNormalized(value, min: range.lowerBound, max: range.upperBound, scale: scale))
+
                     let angle = (totalAngle.radians - offset.radians) * Double(normalized)
-                    let endAngle = startAngle + offset + Angle(radians: angle)   // offset added
-                    
+                    let endAngle = startAngle + offset + Angle(radians: angle)
+
                     let height = geometry.size.height
 
                     ZStack {
@@ -528,22 +613,27 @@ struct FaustKnob: View {
                     .gesture(
                         DragGesture()
                             .onChanged { gesture in
+                                #if os(macOS)
                                 if !isDragging {
                                     isDragging = true
                                     NSCursor.hide()
                                 }
+                                #else
+                                isDragging = true
+                                #endif
 
                                 let location = gesture.location.y
-                                let clamped = min(max(location - 0 / 2, 0), height - 0)
-                                let percent = 1.0 - (clamped / (height - 0))
-
-                                let scaled = (Double(percent) * (range.upperBound - range.lowerBound))  + range.lowerBound
-
-                                value = min(max(scaled, range.lowerBound), range.upperBound)
+                                let clamped = min(max(location, 0), height)
+                                let percent = 1.0 - (clamped / height)
+                                let raw = FaustScaleMapping.toValue(Double(percent), min: range.lowerBound, max: range.upperBound, scale: scale)
+                                let stepped = ((raw - range.lowerBound) / step).rounded() * step + range.lowerBound
+                                value = min(max(stepped, range.lowerBound), range.upperBound)
                             }
                             .onEnded { _ in
                                 isDragging = false
+                                #if os(macOS)
                                 NSCursor.unhide()
+                                #endif
                             }
                     )
                 }
@@ -551,7 +641,7 @@ struct FaustKnob: View {
                 .frame(maxWidth: themeManager.theme.labelSize * 2, maxHeight: themeManager.theme.labelSize * 2)
 
                 HStack {
-                    Text(String(format: "%.1f", value))
+                    Text(valueString(value, unit: unit))
                         .frame(height: themeManager.theme.labelSize)
                         .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 4)
                         .background(themeManager.theme.numboxBackgroundColor)
@@ -564,5 +654,166 @@ struct FaustKnob: View {
         }
         .padding(themeManager.theme.padding)
         .frame(width: themeManager.theme.labelSize * 4)
+        .faustTooltip(tooltip)
+    }
+}
+
+// MARK: - Menu (dropdown for nentry)
+
+struct FaustMenu: View {
+    public let label: String
+    public let address: String
+    public let options: [FaustMenuOption]
+    @Binding var value: Double
+    public let tooltip: String?
+    @EnvironmentObject var themeManager: FaustThemeManager
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label.replacingOccurrences(of: "_", with: " "))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(height: themeManager.theme.labelSize)
+
+            Picker(label, selection: $value) {
+                ForEach(options, id: \.value) { option in
+                    Text(option.label).tag(option.value)
+                }
+            }
+            .labelsHidden()
+        }
+        .padding(.leading, themeManager.theme.padding)
+        .padding(.trailing, themeManager.theme.padding)
+        .padding(.top, themeManager.theme.padding)
+        .padding(.bottom, themeManager.theme.padding)
+        .faustTooltip(tooltip)
+    }
+}
+
+// MARK: - Radio (segmented picker for nentry)
+
+struct FaustRadio: View {
+    public let label: String
+    public let address: String
+    public let options: [FaustMenuOption]
+    @Binding var value: Double
+    public let tooltip: String?
+    @EnvironmentObject var themeManager: FaustThemeManager
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label.replacingOccurrences(of: "_", with: " "))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(height: themeManager.theme.labelSize)
+
+            Picker(label, selection: $value) {
+                ForEach(options, id: \.value) { option in
+                    Text(option.label).tag(option.value)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+        }
+        .padding(.leading, themeManager.theme.padding)
+        .padding(.trailing, themeManager.theme.padding)
+        .padding(.top, themeManager.theme.padding)
+        .padding(.bottom, themeManager.theme.padding)
+        .faustTooltip(tooltip)
+    }
+}
+
+// MARK: - LED (indicator for bargraph)
+
+struct FaustLED: View {
+    public let label: String
+    public let address: String
+    public let min: Double
+    public let max: Double
+    @Binding var value: Double
+    public let tooltip: String?
+    @EnvironmentObject var themeManager: FaustThemeManager
+
+    private var ledColor: Color {
+        let normalized = (value - min) / (max - min)
+        if normalized <= 0 {
+            return Color.gray.opacity(0.3)
+        } else if normalized < 0.6 {
+            return .green
+        } else if normalized < 0.85 {
+            return .yellow
+        } else {
+            return .red
+        }
+    }
+
+    public var body: some View {
+        VStack(alignment: .center, spacing: 2) {
+            Text(label.replacingOccurrences(of: "_", with: " "))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(height: themeManager.theme.labelSize)
+
+            Circle()
+                .fill(ledColor)
+                .overlay(
+                    Circle()
+                        .stroke(Color.primary.opacity(0.3), lineWidth: 1)
+                )
+                .frame(width: themeManager.theme.labelSize * 1.5, height: themeManager.theme.labelSize * 1.5)
+        }
+        .padding(themeManager.theme.padding)
+        .faustTooltip(tooltip)
+    }
+}
+
+// MARK: - Numerical (value-only display for sliders/bargraphs)
+
+struct FaustNumerical: View {
+    public let label: String
+    public let address: String
+    public let range: ClosedRange<Double>
+    public let step: Double
+    @Binding var value: Double
+    public let unit: String?
+    public let tooltip: String?
+    @EnvironmentObject var themeManager: FaustThemeManager
+
+    public var body: some View {
+        VStack(alignment: .center, spacing: 2) {
+            Text(label.replacingOccurrences(of: "_", with: " "))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(height: themeManager.theme.labelSize)
+
+            HStack(spacing: 4) {
+                Button(action: {
+                    let newVal = value - step
+                    value = max(newVal, range.lowerBound)
+                }) {
+                    Image(systemName: "minus")
+                        .frame(width: themeManager.theme.labelSize, height: themeManager.theme.labelSize)
+                }
+                .buttonStyle(.borderless)
+
+                Text(valueString(value, unit: unit))
+                    .frame(height: themeManager.theme.labelSize)
+                    .frame(minWidth: themeManager.theme.labelSize * 2, maxWidth: themeManager.theme.labelSize * 4)
+                    .background(themeManager.theme.numboxBackgroundColor)
+                    .foregroundColor(themeManager.theme.numboxTextColor)
+                    .cornerRadius(themeManager.theme.cornerRadius)
+
+                Button(action: {
+                    let newVal = value + step
+                    value = min(newVal, range.upperBound)
+                }) {
+                    Image(systemName: "plus")
+                        .frame(width: themeManager.theme.labelSize, height: themeManager.theme.labelSize)
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .padding(themeManager.theme.padding)
+        .faustTooltip(tooltip)
     }
 }
