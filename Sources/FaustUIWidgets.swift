@@ -38,21 +38,22 @@ public struct FaustCheckbox: View {
         self.tooltip = tooltip
     }
 
+    private var isOn: Bool { value > 0.5 }
+
     public var body: some View {
-        VStack {
-            Toggle(isOn: Binding(
-                get: { value > 0.5 },
-                set: { value = $0 ? 1.0 : 0.0 }
-            )) {
-                Text(label.replacingOccurrences(of: "_", with: " "))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-            }
-            .frame(minHeight: themeManager.theme.labelSize, maxHeight: themeManager.theme.labelSize * 2)
+        HStack(spacing: 6) {
+            Image(systemName: isOn ? "checkmark.square.fill" : "square")
+                .foregroundColor(isOn ? .accentColor : .secondary)
+            Text(label.replacingOccurrences(of: "_", with: " "))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
         .padding(.leading, themeManager.theme.padding)
         .padding(.trailing, themeManager.theme.padding)
-        .frame(height: themeManager.theme.labelSize)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            value = isOn ? 0.0 : 1.0
+        }
         .faustTooltip(tooltip)
     }
 }
@@ -555,6 +556,7 @@ struct FaustKnob: View {
     @EnvironmentObject var themeManager: FaustThemeManager
 
     @State private var isDragging = false
+    @State private var dragStartNormalized: Double = 0.0
 
     private let thickness: CGFloat = 6.0
     private let totalAngle: Angle = .degrees(300)
@@ -610,22 +612,26 @@ struct FaustKnob: View {
                         }
                         .stroke(Color.accentColor, style: StrokeStyle(lineWidth: thickness, lineCap: .butt))
                     }
-                    .gesture(
-                        DragGesture()
+                    .contentShape(Rectangle())
+                    .highPriorityGesture(
+                        DragGesture(minimumDistance: 1)
                             .onChanged { gesture in
                                 #if os(macOS)
                                 if !isDragging {
                                     isDragging = true
+                                    dragStartNormalized = FaustScaleMapping.toNormalized(value, min: range.lowerBound, max: range.upperBound, scale: scale)
                                     NSCursor.hide()
                                 }
                                 #else
-                                isDragging = true
+                                if !isDragging {
+                                    isDragging = true
+                                    dragStartNormalized = FaustScaleMapping.toNormalized(value, min: range.lowerBound, max: range.upperBound, scale: scale)
+                                }
                                 #endif
 
-                                let location = gesture.location.y
-                                let clamped = min(max(location, 0), height)
-                                let percent = 1.0 - (clamped / height)
-                                let raw = FaustScaleMapping.toValue(Double(percent), min: range.lowerBound, max: range.upperBound, scale: scale)
+                                let delta = -gesture.translation.height / height
+                                let percent = min(max(dragStartNormalized + delta, 0), 1)
+                                let raw = FaustScaleMapping.toValue(percent, min: range.lowerBound, max: range.upperBound, scale: scale)
                                 let stepped = ((raw - range.lowerBound) / step).rounded() * step + range.lowerBound
                                 value = min(max(stepped, range.lowerBound), range.upperBound)
                             }
